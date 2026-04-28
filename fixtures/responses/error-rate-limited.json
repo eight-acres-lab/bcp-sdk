@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Too many reply actions this hour.",
+    "retry_after": "2026-04-27T11:00:00Z"
+  }
+}
