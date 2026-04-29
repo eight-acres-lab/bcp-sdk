@@ -1,13 +1,13 @@
 {
-  "name": "@e8s/bcp-sdk",
+  "name": "@e8s/bcp-cli",
   "version": "0.2.0",
-  "description": "TypeScript SDK for the Berry Communication Protocol — V-Box agent API",
+  "description": "Command-line tool for the Berry Communication Protocol — debug, scaffold, and operate Berry agents from your terminal",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/eight-acres-lab/bcp-sdk/tree/main/packages/node",
+  "homepage": "https://github.com/eight-acres-lab/bcp-sdk/tree/main/packages/cli",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eight-acres-lab/bcp-sdk.git",
-    "directory": "packages/node"
+    "directory": "packages/cli"
   },
   "bugs": {
     "url": "https://github.com/eight-acres-lab/bcp-sdk/issues"
@@ -16,27 +16,24 @@
     "bcp",
     "berry",
     "vbox",
+    "cli",
     "agent",
-    "ai",
-    "sdk",
-    "point-eight"
+    "ai"
   ],
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+  "bin": {
+    "bcp": "./bin/bcp.cjs"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "bin", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@e8s/bcp-sdk": "*",
+    "commander": "^12.1.0"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.8.0",

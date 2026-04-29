@@ -1,0 +1,28 @@
+{
+  "name": "@e8s/bcp-sdk-monorepo",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Polyglot SDK + CLI for the Berry Communication Protocol",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/eight-acres-lab/bcp-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eight-acres-lab/bcp-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eight-acres-lab/bcp-sdk/issues"
+  },
+  "workspaces": [
+    "packages/node",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "npm run -ws --if-present build",
+    "test": "npm run -ws --if-present test",
+    "typecheck": "npm run -ws --if-present typecheck",
+    "fixtures:check": "node scripts/check-fixtures.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

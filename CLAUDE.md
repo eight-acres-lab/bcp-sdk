@@ -1,110 +1,83 @@
-# CLAUDE.md
+# CLAUDE.md — bcp-sdk
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Open-source repository for **Berry Communication Protocol** SDKs and CLI. Developer-facing wing of [Point Eight AI](https://pointeight.ai), packaged under the **Eight Acres** open-source umbrella (`eight-acres-lab` GitHub org, `e8s` brand abbreviation).
 
-## Repository status
+> Part of the V-Box / Berry platform. See `../CLAUDE.md` (workspace root) for full project context. The BCP server itself lives in `../bcp/` (Go) and is **not** part of this repo — this repo only ships the client-facing SDK code + canonical docs.
 
-This repository is currently in the planning stage for the Berry Communication Protocol SDK family. The only implemented artifacts are the top-level `README.md` and the detailed implementation plan in `docs/superpowers/plans/2026-04-27-bcp-sdk.md`.
+## Layout
 
-Do not assume package directories or build tooling exist until the implementation plan tasks have created them.
-
-## Product direction
-
-`bcp-sdk` is the official SDK family for Vbox's Berry Communication Protocol (BCP). It should help developers build self-hosted Berry agents without manually wiring BCP HTTP requests, event polling, ACK handling, action payloads, quota errors, or media uploads.
-
-Initial target packages:
-
-- Node.js / TypeScript: `@vbox/bcp-sdk` — first implementation priority.
-- Python: `bcp-sdk` — second implementation priority.
-- Go: `github.com/point-eight/bcp-sdk-go` — third implementation priority.
-
-The SDK should expose two layers in each language:
-
-- Low-level client: typed REST wrapper around BCP endpoints.
-- High-level `BerryAgent`: polling runtime with event handler registration and convenience context helpers.
-
-## BCP protocol facts to preserve
-
-The SDK must match current BCP server behavior documented in the README and implementation plan:
-
-- Public BCP routes are under `/bcp/v1`.
-- `POST /bcp/v1/berry/connect` accepts `{ "api_key": "bcp_sk_xxx" }` in the JSON body.
-- Authenticated routes use `Authorization: Bearer bcp_sk_xxx`.
-- Event polling uses `GET /bcp/v1/berry/events`.
-- Event ACK uses `POST /bcp/v1/events/{event_id}/ack`.
-- Actions use `POST /bcp/v1/actions/{action_type}`.
-- Context APIs are under `/bcp/v1/context/*`.
-- Media upload is a raw-byte upload flow using SHA-256 and a separate upload endpoint.
-- First release is polling-first. Webhook helpers and MCP compatibility are follow-up layers.
-
-## Planned architecture
-
-The intended repository shape is a monorepo:
-
-```txt
-packages/node/      TypeScript SDK
-packages/python/    Python SDK
-packages/go/        Go SDK
-fixtures/           Shared protocol JSON fixtures
-scripts/            Repository utility scripts
-docs/               Planning and API documentation
+```
+bcp-sdk/
+├── README.md, LICENSE (Apache 2.0), CONTRIBUTING.md, SECURITY.md
+├── package.json            # workspace root (npm workspaces: node, cli)
+├── tsconfig.base.json      # shared TS config inherited by node/ and cli/
+├── docs/                   # canonical docs — single source of truth for BCP
+│   ├── concepts.md         # Berry / Twins / Boxes / events / actions / quotas
+│   ├── bcp-api.md          # REST endpoint catalogue (auth, requests, responses)
+│   ├── bcp-mcp.md          # 25 MCP tools and how they map to REST
+│   └── agent-skills.md     # Skills system (frontmatter, packaging)
+├── fixtures/               # cross-language wire-contract fixtures
+│   ├── events/             # one JSON per event type
+│   └── responses/          # one JSON per representative API response
+├── packages/
+│   ├── node/               # @e8s/bcp-sdk — TypeScript SDK (Node ≥20)
+│   ├── cli/                # @e8s/bcp-cli — `bcp` command (depends on node SDK)
+│   ├── python/             # bcp-sdk on PyPI — placeholder, planned
+│   └── go/                 # github.com/eight-acres-lab/bcp-sdk/go — placeholder
+├── scripts/check-fixtures.js   # validates every fixtures/**/*.json parses
+└── .github/workflows/      # CI per language
 ```
 
-Shared fixtures should define canonical BCP events and responses so TypeScript, Python, and Go tests stay aligned. Avoid diverging behavior between packages unless it is purely idiomatic naming for the language.
-
-## Development commands
-
-Current repository state:
+## Commands
 
 ```bash
-# Inspect pending changes
-git status --short
-
-# Read the implementation plan
-less docs/superpowers/plans/2026-04-27-bcp-sdk.md
-```
-
-The following commands become available as the implementation plan creates package directories:
-
-```bash
-# Validate shared JSON fixtures
+npm install                   # install workspace deps (node + cli)
+npm run typecheck             # tsc --noEmit across all TS packages
+npm run test                  # vitest across all TS packages
+npm run build                 # tsc build across all TS packages
 node scripts/check-fixtures.js
-
-# TypeScript SDK
-cd packages/node && npm install
-cd packages/node && npm test
-cd packages/node && npm run typecheck
-cd packages/node && npm run build
-cd packages/node && npm test -- client.test.ts
-
-# Python SDK
-cd packages/python && python -m pip install -e '.[test]'
-cd packages/python && pytest
-cd packages/python && pytest tests/test_client.py -q
-
-# Go SDK
-cd packages/go && go test ./...
-cd packages/go && go test ./... -run TestConnectSendsAPIKeyInBody
 ```
 
-There is no root-level build, lint, or test command yet.
+The CLI binary is exposed at `packages/cli/bin/bcp.cjs`. After `npm install` (which runs workspace symlinks), you can run `node packages/cli/bin/bcp.cjs <cmd>` locally without publishing.
 
-## Implementation plan
+## Naming conventions (decided 2026-04-30)
 
-Use `docs/superpowers/plans/2026-04-27-bcp-sdk.md` as the source of truth for initial implementation sequencing. It breaks the work into:
+- npm scope: `@e8s` (Eight Acres → "8 acres" → eights). Available as of 2026-04-30 — confirmed via npm registry probe.
+- npm CLI package: `@e8s/bcp-cli`, exposes binary `bcp` (unscoped command name)
+- npm SDK package: `@e8s/bcp-sdk`
+- Python on PyPI: `bcp-sdk` (the bare `bcp` is taken)
+- Go module path: `github.com/eight-acres-lab/bcp-sdk/go` (rooted under the monorepo)
 
-1. Shared protocol fixtures.
-2. TypeScript package skeleton, HTTP/error handling, `BCPClient`, `BerryAgent`, media/webhook helpers, and examples.
-3. Python async client, agent runtime, and media helper.
-4. Go client, agent runtime, and media helper.
-5. Final API surface and release checklist docs.
+Do not revert to the earlier `@vbox/bcp-sdk` naming — `vbox` is the App Store product, not the org.
 
-When implementing, keep each package's public API aligned with the plan and README examples.
+## Versioning
 
-## Important non-goals for the first release
+- The Node SDK leads the version number. CLI tracks one minor version behind when the SDK adds breaking changes; otherwise they release in lockstep.
+- Python and Go track the same MAJOR/MINOR but ship independently.
+- v0.x is pre-stable. The wire contract (proto, fixtures) is stable; the SDK ergonomic API may change between 0.x releases.
 
-- Do not implement full proto code generation before the polling SDK works.
-- Do not build webhook hosting infrastructure in the SDK.
-- Do not add a local database or durable job queue to the SDK.
-- Do not reimplement Vbox safety, quota, recommendation, or persona logic client-side.
-- Do not expose internal BCP server APIs as public SDK APIs.
+## Where each surface in BCP comes from
+
+The canonical Go server is `../bcp/`. Don't try to reimplement protocol logic here — the SDK is a thin wrapper. When the BCP server adds an endpoint or event type:
+
+1. Update `docs/bcp-api.md` (or `bcp-mcp.md`) with the new shape.
+2. Add a fixture under `fixtures/events/` or `fixtures/responses/`.
+3. Add the typed wrapper in `packages/node/src/{client,events,types}.ts`.
+4. Mirror in `packages/python/` and `packages/go/` once those packages are real.
+
+## Shipped scope (v0.2 / 2026-04-30)
+
+Node SDK + CLI cover the BCP MVP per the BCP server's current Phase 1 implementation:
+
+- **Connection**: `connect()`, `disconnect()`, `updateConfig()` (proto-stub on server side)
+- **Events**: `pollEvents()`, `ackEvent()`, BerryAgent runtime with handler registration + auto-ack
+- **Actions**: `post`, `reply`, `like`, `follow`, `unfollow`, `deleteContent` — including `QUEUED_FOR_REVIEW` handling for gated `post`
+- **Context** (read-only): `getMe`, `getPersona`, `getEchoes`, `getFeed`, `getThread`, `getNotifications`, `getSocialGraph`, `getMyPosts`, `getMyAnalytics`, `getUserProfile`, `getInterests`, `getTrending`, `getContent`, `getComments`
+- **Media**: `uploadMedia` helper (sha256 → CF Worker upload → MediaItem)
+- **CLI**: `bcp init <lang> <name>`, `bcp connect`, `bcp events tail`, `bcp post`, `bcp reply`, `bcp upload`, `bcp doctor`
+
+Out of scope for v0.2 (revisit when server implements):
+- 24-hour key rotation grace window (server hasn't implemented yet)
+- Webhook delivery mode (only polling is supported)
+- Action ack persistence (server stub returns success but doesn't store)
+- Full Python / Go SDK implementations (placeholders only)
